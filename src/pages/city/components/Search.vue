@@ -1,0 +1,119 @@
+<template>
+  <div>
+    <div class="search">
+      <input
+      type="text"
+      class="search-input"
+      placeholder="输入城市名或拼音"
+      v-model="keyword">
+    </div>
+    <div class="search-content" ref="search" v-show="keyword">
+      <ul>
+        <li
+        class="search-item border-bottom"
+        v-for="item of list"
+        :key="item.id"
+        @click="handleCityClick(item.name)"
+        >
+          {{item.name}}
+        </li><!-- 循环搜索数据-->
+        <li class="search-item border-bottom" v-show="hasNoData">
+          没有找到匹配数据
+        </li>
+      </ul>
+    </div>
+  </div>
+
+</template>
+
+<script>
+import BScroll from 'better-scroll'
+import { mapMutations } from 'vuex'
+
+export default {
+  name: 'CitySearch',
+  props: {
+    cities: Object
+  },
+  data () {
+    return {
+      keyword: '', /* 表示输入框中的关键字 */
+      list: [], /* 放搜索结果 */
+      timer: null
+    }
+  },
+  methods: {
+    handleCityClick (city) {
+      // this.$store.commit('changeCity', city)
+      this.changeCity(city)
+      // 转跳到首页
+      this.$router.push('/')
+    },
+    ...mapMutations(['changeCity'])
+  },
+  computed: {
+    hasNoData () {
+      return !this.list.length
+    }
+  },
+  watch: {
+    keyword () {
+      if (this.timer) {
+        clearTimeout(this.timer)
+      }
+      if (!this.keyword) {
+        this.list = []
+        return
+      }
+
+      this.timer = setTimeout(() => {
+        const result = []
+        for (let i in this.cities) {
+          this.cities[i].forEach((value) => {
+            if (value.spell.indexOf(this.keyword) > -1 || value.name.indexOf(this.keyword) > -1) {
+              result.push(value)
+            }
+          })
+        }
+        this.list = result
+      }, 100)
+    }
+  },
+  mounted () {
+    this.scroll = new BScroll(this.$refs.search)
+  }
+}
+</script>
+
+<style lang="stylus" scoped>
+@import '~styless/variables.styl'
+.search
+  height: .72rem
+  padding: 0 .1rem
+  background: $bgColor
+
+  .search-input
+    box-sizing: border-box
+    width: 100%
+    padding: 0 .1rem
+    height: .62rem
+    line-height: .62rem
+    color: #666666
+    text-align: center
+    border-radius: .06rem
+.search-content
+  overflow: hidden
+  position: absolute
+  top: 1.58rem
+  left: 0
+  right: 0
+  bottom: 0
+  z-index: 1
+  background: #eee
+
+  .search-item
+    padding-left: .2rem
+    line-height: .62rem
+    background: #fff
+    color: #666
+</style>
